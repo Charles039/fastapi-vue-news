@@ -1,0 +1,30 @@
+.env
+.venv/
+.venv-test/
+.idea/
+__pycache__/
+*.py[cod]
+
+xwzx-news/.env
+xwzx-news/node_modules/
+xwzx-news/dist/
+
+*.log
+.coverage
+htmlcov/
+xwzx-news/coverage/
+
+# 旧代码和与新闻项目无关的本地文件
+main1.py
+lenet5_predictions.png
+q.txt
+
+# SQL Server 本地数据文件及备份
+*.bak
+*.mdf
+*.ldf
+
+# 常见编辑器和系统文件
+.vscode/
+.DS_Store
+Thumbs.db

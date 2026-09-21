@@ -1,0 +1,2 @@
+项目概述：仿今日头条的全栈新闻系统，后端采用异步 Python 框架 FastAPI，前端采用 Vue 3，使用 SQL Server 存储业务数据，并通过 SQLAlchemy 异步 ORM 访问。系统提供用户管理、新闻浏览、管理员新闻管理、收藏和历史记录功能。
+技术栈：FastAPI、Vue 3、SQL Server、SQLAlchemy Async、aioodbc、Redis、Pinia、Vant、passlib、bcrypt、Python asyncio。
