@@ -70,10 +70,10 @@ jobs:
         working-directory: xwzx-news
         run: npm ci
       - name: Build Windows demo ZIP
-        shell: powershell
+        shell: pwsh
         run: .\scripts\build_windows_demo.ps1
       - name: Smoke test packaged executable
-        shell: powershell
+        shell: pwsh
         run: |
           $env:DEMO_PORT = "8765"
           $env:DEMO_OPEN_BROWSER = "false"
@@ -113,7 +113,7 @@ jobs:
             throw "Packaged executable did not become ready"
           }
       - name: Create or update GitHub Release
-        shell: powershell
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

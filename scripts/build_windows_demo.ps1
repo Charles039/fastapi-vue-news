@@ -14,7 +14,7 @@ function Assert-ProjectChild([string]$PathToCheck) {
     $absolutePath = [System.IO.Path]::GetFullPath($PathToCheck)
     $rootWithSeparator = $ProjectRoot.TrimEnd('\') + '\'
     if (-not $absolutePath.StartsWith($rootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "拒绝操作项目目录之外的路径：$absolutePath"
+        throw "Refusing to operate outside the project directory: $absolutePath"
     }
 }
 
@@ -43,7 +43,7 @@ try {
     }
 
     & $PythonCommand -m scripts.build_demo_database --output $DatabasePath
-    if ($LASTEXITCODE -ne 0) { throw "演示数据库生成失败" }
+    if ($LASTEXITCODE -ne 0) { throw "Failed to build the demo database" }
 
     & $PythonCommand -m PyInstaller `
         --noconfirm `
@@ -51,12 +51,12 @@ try {
         --distpath $DistRoot `
         --workpath (Join-Path $BuildRoot "pyinstaller") `
         (Join-Path $ProjectRoot "FastApiVueNews.spec")
-    if ($LASTEXITCODE -ne 0) { throw "PyInstaller 打包失败" }
+    if ($LASTEXITCODE -ne 0) { throw "PyInstaller packaging failed" }
 
     Copy-Item -LiteralPath $DatabasePath -Destination (Join-Path $PackageDirectory "news.db") -Force
     Copy-Item -LiteralPath (Join-Path $ProjectRoot "DEMO_README.txt") -Destination $PackageDirectory -Force
     Compress-Archive -Path (Join-Path $PackageDirectory "*") -DestinationPath $ZipPath -CompressionLevel Optimal
-    Write-Host "演示版构建完成：$ZipPath"
+    Write-Host "Demo package created: $ZipPath"
 }
 finally {
     Pop-Location
