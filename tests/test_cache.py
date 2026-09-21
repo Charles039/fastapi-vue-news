@@ -71,6 +71,24 @@ async def test_redis_failure_degrades_to_database(monkeypatch):
     query.assert_awaited_once()
 
 
+@pytest.mark.asyncio
+async def test_memory_cache_backend(monkeypatch):
+    monkeypatch.setattr(cache_conf, "CACHE_BACKEND", "memory")
+    cache_conf.clear_memory_cache()
+
+    assert await cache_conf.get_cache("missing") is None
+    assert await cache_conf.set_cache("demo", {"value": "ok"}, expire=30)
+    assert await cache_conf.get_json_cache("demo") == {"value": "ok"}
+    assert await cache_conf.increment_cache("version") == 1
+    assert await cache_conf.increment_cache("version") == 2
+
+    token = await cache_conf.acquire_lock("demo-lock", expire=30)
+    assert token
+    assert await cache_conf.acquire_lock("demo-lock", expire=30) is False
+    assert await cache_conf.release_lock("demo-lock", "wrong-token") is False
+    assert await cache_conf.release_lock("demo-lock", token) is True
+
+
 @pytest.mark.redis_integration
 @pytest.mark.asyncio
 async def test_real_redis_round_trip():
@@ -83,4 +101,3 @@ async def test_real_redis_round_trip():
         assert await cache_conf.redis_client.get(key) == "ok"
     finally:
         await cache_conf.redis_client.delete(key)
-

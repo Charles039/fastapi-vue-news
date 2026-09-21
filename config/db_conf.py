@@ -1,19 +1,37 @@
 import os
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession, create_async_engine
+from config.runtime import IS_DEMO, demo_database_path
+
 DEFAULT_DATABASE_URL = (
     "mssql+aioodbc://localhost:1433/news?"
     "driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=yes&trusted_connection=yes"
 )#这里是SQL Server 2022数据库的连接方式,news是数据库名称
-DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
+if IS_DEMO:
+    DATABASE_URL = f"sqlite+aiosqlite:///{demo_database_path().as_posix()}"
+else:
+    DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
 engine_options = {
     "echo": os.getenv("SQL_ECHO", "false").lower() == "true",
 }
 # SQLite 内存数据库用于测试，不支持 SQL Server 使用的 QueuePool 参数。
-if not DATABASE_URL.startswith("sqlite"):
+if DATABASE_URL.startswith("sqlite"):
+    engine_options["connect_args"] = {"timeout": 30}
+else:
     engine_options.update(pool_size=10, max_overflow=10)
 
 async_engine=create_async_engine(DATABASE_URL, **engine_options)#创建异步引擎
+
+
+if DATABASE_URL.startswith("sqlite"):
+    @event.listens_for(async_engine.sync_engine, "connect")
+    def configure_sqlite(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.close()
+
 #定义SQLAlchemy 提供的异步会话工厂类的实例
 AsyncSessionLocal=async_sessionmaker(
     bind=async_engine, #绑定数据库引擎

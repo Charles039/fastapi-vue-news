@@ -8,6 +8,11 @@ __pycache__/
 xwzx-news/.env
 xwzx-news/node_modules/
 xwzx-news/dist/
+/demo-build/
+/demo-dist/
+*.db
+*.sqlite
+*.sqlite3
 
 *.log
 .coverage

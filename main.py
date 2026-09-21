@@ -12,6 +12,7 @@ from sqlalchemy import DateTime, String, Float, func
 from fastapi.middleware.cors import CORSMiddleware
 
 from utils.exception_handlers import register_exception_handlers
+from config.runtime import IS_DEMO, frontend_dist_path
 
 
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
@@ -37,11 +38,6 @@ app.add_middleware(#中间键，自动给每个请求添加这个处理(CORS中�
     allow_methods=["*"],     #允许的请求方法
     allow_headers=["*"],     #允许的请求头
 )
-#定义模块化路由->定义模型类->数据库crud->路由调用逻辑
-@app.get("/")
-async def root():
-    return {"message":"Hello World"}
-
 #挂载路由
 app.include_router(news.router)
 app.include_router(users.router)
@@ -50,3 +46,26 @@ app.include_router(history.router)
 app.include_router(admin_news.router)
 app.include_router(notification.router)
 app.include_router(admin_notification.router)
+
+
+if IS_DEMO:
+    frontend_dir = frontend_dist_path()
+    frontend_index = frontend_dir / "index.html"
+    if not frontend_index.is_file():
+        raise RuntimeError(f"演示版前端资源不存在: {frontend_index}")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def demo_frontend(full_path: str):
+        requested_file = (frontend_dir / full_path).resolve()
+        try:
+            requested_file.relative_to(frontend_dir.resolve())
+        except ValueError:
+            requested_file = frontend_index
+        if requested_file.is_file():
+            return FileResponse(requested_file)
+        return FileResponse(frontend_index)
+else:
+    #定义模块化路由->定义模型类->数据库crud->路由调用逻辑
+    @app.get("/")
+    async def root():
+        return {"message":"Hello World"}
