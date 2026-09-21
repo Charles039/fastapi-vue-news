@@ -1,11 +1,19 @@
 import argparse
 import asyncio
 import os
+import sys
 from pathlib import Path
 
 
 DEMO_ADMIN_USERNAME = "abc"
 DEMO_ADMIN_PASSWORD = "12345678"
+
+
+def configure_console_output() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
 
 
 def configure_demo_environment(database_path: Path) -> None:
@@ -67,9 +75,9 @@ def build_database(output_path: Path) -> None:
     configure_demo_environment(output_path)
     run_migrations(project_root)
     inserted, skipped = asyncio.run(seed_database())
-    print(f"演示数据库已生成：{output_path}")
-    print(f"演示新闻：新增 {inserted} 条，跳过 {skipped} 条重复数据")
-    print(f"演示管理员：{DEMO_ADMIN_USERNAME} / {DEMO_ADMIN_PASSWORD}")
+    print(f"Demo database created: {output_path}")
+    print(f"Demo news: inserted {inserted}, skipped {skipped} duplicates")
+    print(f"Demo administrator: {DEMO_ADMIN_USERNAME} / {DEMO_ADMIN_PASSWORD}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -84,11 +92,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    configure_console_output()
     args = parse_args()
     try:
         build_database(args.output)
     except Exception as exc:
-        print(f"演示数据库生成失败：{exc}")
+        print(f"Failed to build demo database: {exc}")
         raise SystemExit(1) from exc
 
 

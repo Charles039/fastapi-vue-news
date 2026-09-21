@@ -14,12 +14,19 @@ os.environ.setdefault("SQL_ECHO", "false")
 from config.runtime import demo_database_path, frontend_dist_path  # noqa: E402
 
 
+def configure_console_output() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 def find_available_port() -> int:
     configured_port = os.getenv("DEMO_PORT")
     if configured_port:
         port = int(configured_port)
         if not 1 <= port <= 65535:
-            raise ValueError("DEMO_PORT 必须位于 1 到 65535 之间")
+            raise ValueError("DEMO_PORT must be between 1 and 65535")
         return port
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
@@ -47,22 +54,23 @@ def open_browser_when_ready(url: str) -> None:
 def pause_after_error() -> None:
     if sys.stdin and sys.stdin.isatty():
         try:
-            input("按 Enter 键关闭窗口……")
+            input("Press Enter to close this window...")
         except EOFError:
             pass
 
 
 def main() -> int:
+    configure_console_output()
     database_path = demo_database_path()
     frontend_path = frontend_dist_path()
     if not database_path.is_file():
-        print(f"启动失败：演示数据库不存在：{database_path}")
-        print("请完整解压 Release ZIP，不要只复制 EXE 文件。")
+        print(f"Startup failed: demo database not found: {database_path}")
+        print("Extract the complete Release ZIP; do not copy only the EXE file.")
         pause_after_error()
         return 1
     if not (frontend_path / "index.html").is_file():
-        print(f"启动失败：前端资源不存在：{frontend_path}")
-        print("请完整解压 Release ZIP 后重新运行。")
+        print(f"Startup failed: frontend assets not found: {frontend_path}")
+        print("Extract the complete Release ZIP and try again.")
         pause_after_error()
         return 1
 
@@ -73,11 +81,11 @@ def main() -> int:
         import uvicorn
 
         print("=" * 54)
-        print("FastAPI + Vue 新闻系统演示版")
-        print(f"访问地址：{url}")
-        print("演示管理员：abc / 12345678")
-        print(f"便携数据库：{database_path}")
-        print("关闭此窗口或按 Ctrl+C 即可停止服务。")
+        print("FastAPI + Vue News Demo")
+        print(f"URL: {url}")
+        print("Demo administrator: abc / 12345678")
+        print(f"Portable database: {database_path}")
+        print("Close this window or press Ctrl+C to stop the server.")
         print("=" * 54)
         open_browser_when_ready(url)
         uvicorn.run(
@@ -90,7 +98,7 @@ def main() -> int:
         )
         return 0
     except Exception as exc:
-        print(f"启动失败：{exc}")
+        print(f"Startup failed: {exc}")
         pause_after_error()
         return 1
 
